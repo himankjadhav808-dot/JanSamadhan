@@ -1,0 +1,25 @@
+{
+  "project_type": "Full-stack civic issue reporting platform — Express/MongoDB backend + React/Vite frontend (monorepo, two separate package.json roots)",
+  "language": "JavaScript (CommonJS backend, ESM frontend via Vite + React)",
+  "build_system": "Vite (frontend at frontend/), Node/Express (backend at backend/). No workspace-level build script — each side is run independently.",
+  "test_framework": "None configured (no test runner found in either package.json). Verification is done via syntax checks and manual browser testing.",
+  "build_command": "cd frontend && npm run build   (Vite production build; checks for JSX/import errors)",
+  "test_command": "node --check <file>   for backend JS syntax; cd frontend && npm run build for frontend JSX syntax.",
+  "verification_instructions": "1. Run `node --check <backend-file>` for every changed backend file to confirm no syntax errors. 2. Run `cd frontend && npm run build` to confirm no broken imports or JSX errors. 3. Manually start backend (`cd backend && node server.js`) and frontend (`cd frontend && npm run dev`) to verify runtime behaviour.",
+  "snapshot_or_generated_files": null,
+  "environment_constraints": "Windows PowerShell. `head` is not a valid PowerShell command — use `Get-Content | Select-Object -First N` or the read_file tool with limit. No automated test suite exists.",
+  "contribution_requirements": "No AGENTS.md or CONTRIBUTING.md found. Follow existing code style: 2-space indent in JSX, Tailwind utility classes, Lucide icons, no new libraries without justification.",
+  "key_patterns": "Frontend auth: `const { user } = useAuth()` from '../../context/AuthContext'. Authority check used in Sidebar: `const isAuthority = user?.role === 'sub-admin' || user?.role === 'super-admin'`. MyReports.jsx uses a normalizeRole() helper and checks `isCitizen` before rendering the Report Issue button — already correct. Navbar renders the Report Issue Link inside `{user && (...)}` but without authority guard — needs fix. Sidebar bottom CTA card navigates to '/report' for ALL users — needs authority guard. Backend workers use CommonJS require/exports. server.js has a `start()` async function that calls connectDB() then app.listen(). SLA worker currently calls mongoose.connect/disconnect itself and is not wired into server.js.",
+  "relevant_files": [
+    "frontend/src/components/layout/Navbar.jsx",
+    "frontend/src/components/layout/Sidebar.jsx",
+    "frontend/src/pages/MyReports.jsx",
+    "frontend/src/pages/Citizen/ReportIssue.jsx",
+    "frontend/src/hooks/useVoiceToText.js",
+    "backend/workers/slaEscalation.js",
+    "backend/server.js",
+    "frontend/src/context/AuthContext.jsx",
+    "frontend/src/context/LanguageContext.jsx"
+  ],
+  "directory_structure": "backend/ — Express server, controllers/, models/, routes/, workers/, utils/cryptoAudit.js, config/db.js, server.js. frontend/src/ — pages/ (Auth/, Authority/, Citizen/, Profile/, Home.jsx, MyReports.jsx, etc.), components/ (layout/Navbar.jsx, layout/Sidebar.jsx, issues/IssueCard.jsx, AuditLedgerModal.jsx), context/ (AuthContext.jsx, LanguageContext.jsx), hooks/ (empty — useVoiceToText.js does not yet exist), lib/api.js, constants/index.js."
+}

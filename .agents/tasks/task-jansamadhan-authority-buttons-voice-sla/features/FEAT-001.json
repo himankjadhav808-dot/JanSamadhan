@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Hide the '+ Report Issue' button from admin/sub-admin roles in Navbar.jsx and Sidebar.jsx. These are the two UI surfaces that currently show the button to ALL logged-in users without checking role. MyReports.jsx already guards it with `isCitizen` — no change needed there.",
+  "status": "completed",
+  "steps": [
+    "Read frontend/src/components/layout/Navbar.jsx. Immediately after `const { user } = useAuth();` (line 14), add: `const isAuthority = user?.role === 'sub-admin' || user?.role === 'super-admin';`. Then find the Report Issue Link block (~line 113–121): `{user && (<Link to='/report' ...> ... </Link>)}` and change the condition to `{user && !isAuthority && (...)}`. No other changes to this file.",
+    "Read frontend/src/components/layout/Sidebar.jsx. The `isAuthority` variable is already declared at line 43: `const isAuthority = user?.role === 'sub-admin' || user?.role === 'super-admin';`. Find the bottom CTA card block (the div with onClick navigate('/report'), ~lines 125–152). Wrap the entire outer `<div ... onClick={() => { onClose(); navigate('/report'); }} ...>` element with `{!isAuthority && (...)}`. The `isAuthority` variable is already available — do not re-declare it."
+  ],
+  "acceptance_criteria": [
+    "When logged in as a citizen, the Report Issue button is visible in the Navbar and the 'Did You Know?' CTA card is visible in the Sidebar.",
+    "When logged in as a sub-admin or super-admin, the Report Issue Link is absent from the Navbar and the 'Did You Know?' CTA card is absent from the Sidebar.",
+    "`cd frontend && npm run build` completes with no errors after the changes."
+  ],
+  "verification": [
+    "Run `cd frontend && npm run build` — must complete with 0 errors.",
+    "Manually start the app and log in as sub-admin (role: 'sub-admin'): confirm no Report Issue button in Navbar, no 'Did You Know?' card in Sidebar.",
+    "Log in as citizen: confirm both elements are visible."
+  ],
+  "blocked_reason": null,
+  "findings": "Both changes applied cleanly. Navbar.jsx: added isAuthority check using sub-admin/super-admin roles and guarded the Report Issue Link. Sidebar.jsx: isAuthority was already declared at line 43; wrapped the bottom CTA card div with {!isAuthority && (...)}. Build completed with 0 errors (pre-existing chunk-size and leaflet dynamic-import warnings are unrelated)."
+}

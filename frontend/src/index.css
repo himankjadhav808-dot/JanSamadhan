@@ -1,0 +1,35 @@
+/*
+ * Noto Sans Devanagari — loaded via Google Fonts for full Hindi/Devanagari
+ * script support. Plus Jakarta Sans is the primary Latin UI font.
+ * NOTE: @import must be the very first statement — before any @tailwind
+ * directives — or PostCSS will throw a build error.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  @apply bg-slate-50 text-slate-800 antialiased;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+#root {
+  width: 100%;
+  margin: 0;
+  min-height: 100svh;
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+  font-family: inherit;
+}
