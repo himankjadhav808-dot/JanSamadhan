@@ -1,7 +1,0 @@
-{
-  "task_id": "task-jansamadhan-authority-buttons-voice-sla",
-  "task_description": "Three targeted changes: (1) Hide Report Issue button/CTA in Navbar and Sidebar for admin/sub-admin roles. (2) Create useVoiceToText hook and integrate mic button into ReportIssue page. (3) Refactor SLA escalation worker from standalone script to in-process setInterval worker wired into server.js.",
-  "status": "completed",
-  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
-  "blocked_reason": null
-}
