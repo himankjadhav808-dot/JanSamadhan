@@ -32,8 +32,8 @@ const BADGE_CONFIG = [
     points: 30,
   },
   {
-    id: 'civic_champion',
-    name: 'Civic Champion',
+    id: 'jan_champion',
+    name: 'Jan Champion',
     desc: '20 issues reported',
     icon: Trophy,
     color: 'text-purple-600',
@@ -115,7 +115,7 @@ export default function Rewards() {
       case 'community_voice':
         isUnlocked = totalUpvotes >= 25;
         break;
-      case 'civic_champion':
+      case 'jan_champion':
         isUnlocked = totalReports >= 20;
         break;
       case 'verified_citizen':
@@ -149,7 +149,7 @@ export default function Rewards() {
           <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6 text-white">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-blue-200">Your Civic Impact</p>
+                <p className="text-sm font-medium text-blue-200">Your JanSamadhan Impact</p>
                 <h1 className="mt-1 text-3xl font-bold">{totalPoints} Points</h1>
                 <p className="mt-1 text-sm text-blue-100">
                   {unlockedBadgesCount} badge{unlockedBadgesCount !== 1 ? 's' : ''} earned · Keep reporting to level up!

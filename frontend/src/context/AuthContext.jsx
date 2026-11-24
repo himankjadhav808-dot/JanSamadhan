@@ -2,8 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import api from '../lib/api';
 
 const AuthContext = createContext(null);
-const TOKEN_KEY = 'civic_token';
-const USER_KEY = 'civic_user';
+const TOKEN_KEY = 'js_token';
+const USER_KEY  = 'js_user';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {

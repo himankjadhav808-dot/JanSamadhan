@@ -1,16 +1,41 @@
-# React + Vite
+# JanSamadhan — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + Vite frontend for the JanSamadhan civic issue-reporting platform.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React 19** with [Vite](https://vitejs.dev/) and HMR
+- **Tailwind CSS** for styling
+- **React Leaflet** for the interactive issue map
+- **Recharts** for analytics dashboards
+- **Oxlint** for linting
 
-## React Compiler
+## Development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# Install dependencies
+npm install
 
-## Expanding the Oxlint configuration
+# Start dev server (http://localhost:5173)
+npm run dev
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## Environment
+
+Copy `../backend/.env.example` for reference. The frontend reads one env variable:
+
+```
+VITE_API_URL=http://localhost:5000/api
+```
+
+## Lint
+
+```bash
+npm run lint
+```
