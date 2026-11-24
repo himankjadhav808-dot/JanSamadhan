@@ -20,7 +20,7 @@ app.use(express.json({ limit: '10mb' }));
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
-    service: 'civic-social-network',
+    service: 'JanSamadhan',
     env: process.env.NODE_ENV || 'development',
   });
 });

@@ -1,7 +1,7 @@
 {
-  "name": "civic-social-network-backend",
+  "name": "jansamadhan-backend",
   "version": "1.0.0",
-  "description": "Civic Social Network — Express + MongoDB API",
+  "description": "jansamadhan — Express + MongoDB API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
