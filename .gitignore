@@ -24,3 +24,6 @@ SUBADMIN_EDIT_FEATURE.md
 
 .agents/
 .vscode/
+
+package.json
+package-lock.json
