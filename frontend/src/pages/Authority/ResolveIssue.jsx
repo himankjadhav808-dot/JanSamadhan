@@ -33,8 +33,9 @@ export default function ResolveIssue() {
   const navigate = useNavigate();
   const [issue, setIssue] = useState(null);
   const [afterPreview, setAfterPreview] = useState('');
-  const [afterUrl, setAfterUrl] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [afterUrl, setAfterUrl]         = useState('');
+  const [imageSize, setImageSize]       = useState('');   // compressed-size hint
+  const [loading, setLoading]           = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -68,12 +69,50 @@ export default function ResolveIssue() {
       setError('Please choose an image file');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Please choose an image under 5MB');
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Please choose an image under 10MB');
       return;
     }
     setError('');
-    const dataUrl = await readFileAsDataUrl(file);
+
+    // Auto-compress files larger than 1.5 MB using canvas
+    const COMPRESS_THRESHOLD = 1.5 * 1024 * 1024;
+    const MAX_SIDE = 1600;
+
+    let finalFile = file;
+    if (file.size > COMPRESS_THRESHOLD) {
+      try {
+        const bitmap = await createImageBitmap(file);
+        let { width, height } = bitmap;
+        if (width > MAX_SIDE || height > MAX_SIDE) {
+          const ratio = Math.min(MAX_SIDE / width, MAX_SIDE / height);
+          width  = Math.round(width  * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width  = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
+        bitmap.close();
+        const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.8));
+        if (blob && blob.size < file.size) {
+          const baseName = file.name.replace(/\.[^.]+$/, '') || 'repair';
+          finalFile = new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' });
+        }
+      } catch {
+        // Compression failed — fall back to original file silently
+      }
+    }
+
+    const fmt = (n) => n < 1024 * 1024
+      ? `${(n / 1024).toFixed(0)} KB`
+      : `${(n / (1024 * 1024)).toFixed(1)} MB`;
+
+    setImageSize(finalFile !== file
+      ? `Compressed: ${fmt(finalFile.size)} (original ${fmt(file.size)})`
+      : fmt(file.size));
+
+    const dataUrl = await readFileAsDataUrl(finalFile);
     setAfterPreview(dataUrl);
     setAfterUrl(dataUrl);
   };
@@ -182,6 +221,9 @@ export default function ResolveIssue() {
             <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
           </label>
         </div>
+        {imageSize && (
+          <p className="mt-1 text-[11px] font-medium text-slate-500">{imageSize}</p>
+        )}
 
         <div className="flex flex-wrap items-center justify-end gap-3">
           <Link

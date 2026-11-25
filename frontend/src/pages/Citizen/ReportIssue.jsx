@@ -118,6 +118,7 @@ export default function ReportIssue() {
   const [location, setLocation] = useState({ lat: DEFAULT_LAT, lng: DEFAULT_LNG, accuracy: null });
   const [locationError, setLocationError] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageSize, setImageSize]       = useState('');   // human-readable size shown below preview
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isLocating, setIsLocating] = useState(true);
@@ -182,14 +183,57 @@ export default function ReportIssue() {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
       setError(t.imageTooLarge);
       return;
     }
+    setError('');
+
+    // Auto-compress files larger than 1.5 MB using canvas
+    const COMPRESS_THRESHOLD = 1.5 * 1024 * 1024;
+    const MAX_SIDE = 1600;
+
+    let finalFile = file;
+    if (file.size > COMPRESS_THRESHOLD) {
+      try {
+        const bitmap = await createImageBitmap(file);
+        let { width, height } = bitmap;
+        if (width > MAX_SIDE || height > MAX_SIDE) {
+          const ratio = Math.min(MAX_SIDE / width, MAX_SIDE / height);
+          width  = Math.round(width  * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width  = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
+        bitmap.close();
+        const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.8));
+        if (blob && blob.size < file.size) {
+          const baseName = file.name.replace(/\.[^.]+$/, '') || 'photo';
+          finalFile = new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' });
+        }
+      } catch {
+        // Compression failed — fall back to original file silently
+      }
+    }
+
+    const fmt = (n) => n < 1024 * 1024
+      ? `${(n / 1024).toFixed(0)} KB`
+      : `${(n / (1024 * 1024)).toFixed(1)} MB`;
+
+    const sizeLabel = finalFile !== file
+      ? `Compressed: ${fmt(finalFile.size)} (original ${fmt(file.size)})`
+      : fmt(file.size);
+    setImageSize(sizeLabel);
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -198,11 +242,12 @@ export default function ReportIssue() {
         setFormData((prev) => ({ ...prev, originalImageUrl: reader.result }));
       }
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(finalFile);
   };
 
   const handleRemoveImage = () => {
     setImagePreview(null);
+    setImageSize('');
     setFormData((prev) => ({ ...prev, originalImageUrl: '' }));
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -300,6 +345,9 @@ export default function ReportIssue() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
+            )}
+            {imageSize && (
+              <p className="mt-1.5 text-[11px] font-medium text-slate-500">{imageSize}</p>
             )}
             <input
               ref={fileInputRef}
