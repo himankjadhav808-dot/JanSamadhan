@@ -664,6 +664,14 @@ exports.validateResolution = asyncHandler(async (req, res) => {
     throw new Error('Issue must be in Pending_Validation status to validate');
   }
 
+  // Only the original reporter may approve/reject a proposed fix.
+  // Super-admins and admins are exempt (they can override in edge cases).
+  const isAdmin = ['admin', 'super-admin'].includes(req.user.role);
+  if (!isAdmin && String(issue.reporterId) !== String(req.user._id)) {
+    res.status(403);
+    throw new Error('Only the citizen who reported this issue can validate the proposed fix');
+  }
+
   if (!issue.resolution) {
     res.status(400);
     throw new Error('Issue has no resolution to validate');

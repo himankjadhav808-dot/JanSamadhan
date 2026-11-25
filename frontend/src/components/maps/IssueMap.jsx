@@ -9,21 +9,70 @@ import { toLatLng } from '../../lib/issues';
 import { ExternalLink, CheckCircle, Crosshair, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon   from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
+// ---------------------------------------------------------------------------
+// Suppress Leaflet's default asset-based icon so our divIcon pins are always
+// used and no broken-image markers appear as a fallback.
+// ---------------------------------------------------------------------------
 delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl:       markerIcon,
-  shadowUrl:     markerShadow,
-});
+L.Icon.Default.mergeOptions({ iconUrl: '', iconRetinaUrl: '', shadowUrl: '' });
 
 // Fixed Indore service-area anchor — this NEVER changes
 const INDORE_CENTER    = [22.7196, 75.8577];
 const RADIUS_IN_METERS = 20000;
 const INDORE_BOUNDS    = [[22.50, 75.60], [22.90, 76.10]];
+
+// ---------------------------------------------------------------------------
+// createPinIcon — builds a teardrop-shaped Leaflet divIcon in any fill color.
+//   fillColor   — CSS color string for the pin body
+//   borderColor — CSS color string for the border ring and inner dot
+// ---------------------------------------------------------------------------
+function createPinIcon(fillColor, borderColor = '#ffffff') {
+  return L.divIcon({
+    className: 'custom-colored-pin',
+    html: `
+      <div style="
+        width: 28px;
+        height: 28px;
+        background-color: ${fillColor};
+        border: 2.5px solid ${borderColor};
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <span style="
+          width: 8px;
+          height: 8px;
+          background-color: ${borderColor};
+          border-radius: 9999px;
+          transform: rotate(45deg);
+          display: inline-block;
+        "></span>
+      </div>
+    `,
+    iconSize:    [28, 28],
+    iconAnchor:  [14, 28],
+    popupAnchor: [0, -26],
+  });
+}
+
+// Named pin icons — created once at module level so they are never recreated
+const blueLivePinIcon   = createPinIcon('#2563eb');   // Live GPS location
+const redNewIssueIcon   = createPinIcon('#dc2626');   // Live / open issue
+const yellowPendingIcon = createPinIcon('#eab308');   // Pending_Validation
+const greenSolvedIcon   = createPinIcon('#16a34a');   // Solved / Resolved
+
+// ---------------------------------------------------------------------------
+// getIssuePinIcon — maps an issue's status string to the correct icon.
+// ---------------------------------------------------------------------------
+function getIssuePinIcon(status) {
+  const s = (status || '').toLowerCase();
+  if (s.includes('pending'))                      return yellowPendingIcon;
+  if (s === 'solved' || s === 'resolved')         return greenSolvedIcon;
+  return redNewIssueIcon;
+}
 
 // ---------------------------------------------------------------------------
 // MapViewMover
@@ -57,6 +106,8 @@ function MapViewMover({ mapTarget }) {
 //     click or drag can reposition the pin.
 //   • Recenter button is absolutely positioned over the map — not inside
 //     Leaflet controls — so it is always visible and clickable.
+//   • Color-coded pins: Blue = live location, Red = open issue,
+//     Yellow = pending validation, Green = solved.
 // ---------------------------------------------------------------------------
 export default function IssueMap({
   issues       = [],
@@ -74,6 +125,8 @@ export default function IssueMap({
   return (
     <div className={`flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card ${className}`}>
       <style>{`
+        /* Strip all default Leaflet marker styles so our divIcon renders cleanly */
+        .custom-colored-pin { background: transparent !important; border: none !important; }
         .custom-map-popup .leaflet-popup-content-wrapper {
           padding: 0; border-radius: 12px;
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -117,9 +170,9 @@ export default function IssueMap({
             }}
           />
 
-          {/* Live GPS user marker — read-only, geolocation-driven only */}
+          {/* Live GPS user marker — Blue pin, read-only, geolocation-driven only */}
           {liveLocation && (
-            <Marker position={liveLocation}>
+            <Marker position={liveLocation} icon={blueLivePinIcon}>
               <Popup>
                 <div className="py-0.5 text-xs font-medium text-slate-800">
                   <p className="mb-0.5 font-bold text-blue-600">📍 Your Live Location</p>
@@ -130,12 +183,16 @@ export default function IssueMap({
             </Marker>
           )}
 
-          {/* Issue report pins */}
+          {/* Issue report pins — color driven by status */}
           {issues.map((issue) => {
             const position = toLatLng(issue);
             if (!position) return null;
             return (
-              <Marker key={issue._id} position={position}>
+              <Marker
+                key={issue._id}
+                position={position}
+                icon={getIssuePinIcon(issue.status)}
+              >
                 <Popup className="custom-map-popup">
                   <div className="w-56 space-y-2 p-1">
                     {issue.originalImageUrl && (
@@ -206,7 +263,25 @@ export default function IssueMap({
         )}
       </div>
 
-      {/* Status bar below the map */}
+      {/* ── Pin legend ───────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-100 px-3 py-1.5">
+        {[
+          { color: '#2563eb', label: 'Your Location' },
+          { color: '#dc2626', label: 'New Issue'     },
+          { color: '#eab308', label: 'Pending'       },
+          { color: '#16a34a', label: 'Solved'        },
+        ].map(({ color, label }) => (
+          <span key={label} className="flex items-center gap-1.5 text-[10px] font-medium text-slate-500">
+            <span
+              className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            {label}
+          </span>
+        ))}
+      </div>
+
+      {/* ── GPS status bar ───────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 border-t border-slate-100 px-3 py-1.5">
         <span className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
           gpsStatus.startsWith('GPS active') || gpsStatus.startsWith('Pinned')

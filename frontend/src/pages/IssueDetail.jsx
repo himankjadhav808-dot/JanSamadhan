@@ -261,7 +261,17 @@ export default function IssueDetail() {
   const statusCfg     = STATUS_CONFIG[issue.status] || STATUS_CONFIG.Live;
   const resolutionImg = issue.resolution?.resolutionImageUrl;
   const showAfter     = (issue.status === 'Solved' || issue.status === 'Pending_Validation') && resolutionImg;
-  const canValidate   = user?.role === 'citizen' && issue.status === 'Pending_Validation';
+
+  // Validation is restricted to the exact citizen who reported this issue
+  const reporterObjectId = issue.reporterId?._id ?? issue.reporterId;
+  const isReporter    = role === 'citizen' &&
+                        Boolean(user?._id) &&
+                        String(user._id) === String(reporterObjectId);
+  const canValidate   = isReporter && issue.status === 'Pending_Validation';
+  // Different citizen sees a read-only note instead of Approve/Reject
+  const showAwaitingNote = !isReporter &&
+                           role === 'citizen' &&
+                           issue.status === 'Pending_Validation';
   const locationText  = issue.locationName || (
     issue.location?.coordinates
       ? `${issue.location.coordinates[1].toFixed(5)}°N, ${issue.location.coordinates[0].toFixed(5)}°E`
@@ -526,6 +536,15 @@ export default function IssueDetail() {
                 {validateError}
               </p>
             )}
+          </div>
+        )}
+
+        {/* Read-only note for citizens who are NOT the reporter */}
+        {showAwaitingNote && (
+          <div className="mx-5 mb-4 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2">
+            <p className="text-xs font-medium text-amber-700">
+              ⏳ Awaiting reporter validation
+            </p>
           </div>
         )}
       </div>

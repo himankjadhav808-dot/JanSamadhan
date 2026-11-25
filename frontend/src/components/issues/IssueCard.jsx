@@ -172,7 +172,16 @@ export default function IssueCard({ issue, onVote, currentUserId, userRole, onVa
   const canVote       = Boolean(currentUserId);
   const resolutionImg = issue.resolution?.resolutionImageUrl;
   const showAfter     = (issue.status === 'Solved' || issue.status === 'Pending_Validation') && resolutionImg;
-  const canValidate   = userRole === 'citizen' && issue.status === 'Pending_Validation';
+
+  // Validation is only available to the exact citizen who reported this issue
+  const reporterObjectId = issue.reporterId?._id ?? issue.reporterId;
+  const isReporter    = Boolean(currentUserId) &&
+                        String(currentUserId) === String(reporterObjectId);
+  const canValidate   = isReporter && issue.status === 'Pending_Validation';
+  // A different logged-in citizen sees a read-only note instead
+  const showAwaitingNote = !isReporter &&
+                           userRole === 'citizen' &&
+                           issue.status === 'Pending_Validation';
   const statusCfg     = STATUS_CONFIG[issue.status] || STATUS_CONFIG.Live;
 
   const statusLabelText = () => {
@@ -887,6 +896,15 @@ export default function IssueCard({ issue, onVote, currentUserId, userRole, onVa
               {validateError}
             </p>
           )}
+        </div>
+      )}
+
+      {/* Read-only note shown to citizens who are NOT the reporter */}
+      {showAwaitingNote && (
+        <div className="mx-4 mb-3 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2">
+          <p className="text-[11px] font-medium text-amber-700">
+            ⏳ Awaiting reporter validation
+          </p>
         </div>
       )}
 
